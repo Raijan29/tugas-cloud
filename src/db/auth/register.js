@@ -11,9 +11,6 @@ export const handleRegister = async (dataUser) => {
 
     console.log({ data, error });
 
-    if (data.length === 0) {
-      return { status: false, message: "tidak boleh kosong" };
-    }
     if (data.length > 0) {
       return { status: false, message: "Email sudah digunakan" };
     }

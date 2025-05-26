@@ -41,6 +41,10 @@ const RegisterSection = () => {
     const { status, message } = await handleRegister(value);
     console.log(status, message);
 
+    if (value.length == 0) {
+      return { status: false, message: "tidak boleh kosong" };
+    }
+
     if (status) {
       navigate("/login");
     } else {
