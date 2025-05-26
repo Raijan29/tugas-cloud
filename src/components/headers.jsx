@@ -1,33 +1,49 @@
 export default function Headers() {
-  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[98%] mx-auto my-10 py-1 text-center bg-[#E6A4B4] text-black rounded-lg">
-    <marquee>
-      <h1 className="text-xl">SELAMAT DATANG DI TK AL-BAROKAH</h1>
-    </marquee>
-  </div>;
-
-  {
-    /* Navigation Buttons */
-  }
-  <div className="absolute top-0 right-0 mt-0">
-    <div className="text-right">
-      <ul className="flex space-x-2 mr-4 mt-2">
-        <li>
-          <a
-            href="index_login.php"
-            className="inline-block px-4 py-2 text-xs rounded-full bg-white text-[#ef6771] shadow-md hover:bg-gray-100 transition"
-          >
-            Beranda
+  <header className="fixed w-full  top-0 left-0 z-50 bg-[white] shadow-lg">
+    <nav className="container mx-auto px-4 py-3">
+      <div className="flex justify-between items-center">
+        <div className="w-max h-max  flex items-center gap-3">
+          <a href="/" className="flex items-center">
+            <img src="/logo123.png" alt="Logo tk" className="h-12" />
           </a>
-        </li>
-        <li>
-          <a
-            href="tabelsiswa.php"
-            className="inline-block px-4 py-2 text-xs rounded-full bg-white text-[#ef6771] shadow-md hover:bg-gray-100 transition"
-          >
-            Daftar Nama Siswa
+          <p className=" font-bold text-[20px] text-[#ffde59]">RA </p>
+          <p className=" font-bold text-[20px] text-[#5cb071]">NURJANNAH</p>
+        </div>
+        <div className="hidden lg:flex items-center space-x-8">
+          <Link to={"/"} className="text-gray-700 test">
+            Home
+          </Link>
+          <Link to={"/booking"} className="text-gray-700 test">
+            profil
+          </Link>
+          <Link to={"/tentang"} className="text-gray-700 test">
+            About
+          </Link>
+          <a href="/home" className="text-gray-700 test">
+            Data Siswa
           </a>
-        </li>
-      </ul>
-    </div>
-  </div>;
+          <Link
+            to={"/login"}
+            className="text-blue-600 test  capitalize font-bold"
+          ></Link>
+        </div>
+        <button className="lg:hidden text-gray-700 ">
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+    </nav>
+  </header>;
 }

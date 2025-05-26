@@ -1,407 +1,345 @@
-import React, { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import Footer from "../components/footer";
-import Headers from "../components/headers";
+import { useState } from "react";
+import Navbar from "../components/navbar";
 
-// Inisialisasi Supabase client
-const supabaseUrl = "https://your-project.supabase.co";
-const supabaseKey = "your-anon-key";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const Home = () => {
+  // Data contoh siswa
+  const [siswa, setSiswa] = useState([
+    {
+      id: 1,
+      nis: "2023001",
+      nama: "Andi Wijaya",
+      jenisKelamin: "Laki-laki",
+      kelas: "X IPA 1",
+      tanggalLahir: "2007-05-15",
+      alamat: "Jl. Merdeka No. 10, Jakarta",
+      noTelepon: "081234567890",
+      email: "andi.wijaya@email.com",
+    },
+    {
+      id: 2,
+      nis: "2023002",
+      nama: "Budi Santoso",
+      jenisKelamin: "Laki-laki",
+      kelas: "X IPA 2",
+      tanggalLahir: "2007-08-20",
+      alamat: "Jl. Sudirman No. 45, Jakarta",
+      noTelepon: "081298765432",
+      email: "budi.santoso@email.com",
+    },
+    {
+      id: 3,
+      nis: "2023003",
+      nama: "Citra Lestari",
+      jenisKelamin: "Perempuan",
+      kelas: "X IPS 1",
+      tanggalLahir: "2007-03-10",
+      alamat: "Jl. Thamrin No. 8, Jakarta",
+      noTelepon: "081223344556",
+      email: "citra.lestari@email.com",
+    },
+  ]);
 
-const FormPendaftaran = () => {
-  // State untuk data form
-  const [formData, setFormData] = useState({
-    nama_siswa: "",
-    nik: "",
-    umur: "",
-    jenis_kelamin: "",
-    tanggal_lahir: "",
-    tempat_lahir: "",
-    agama: "",
-    alamat: "",
-    no_kk: "",
-    persetujuan: false,
-  });
+  // State untuk pencarian
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // State untuk validasi
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  // Handle perubahan input
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  // Validasi form
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.nama_siswa.trim())
-      newErrors.nama_siswa = "Nama siswa wajib diisi";
-    if (!formData.nik.trim()) newErrors.nik = "NIK wajib diisi";
-    if (!/^\d{16}$/.test(formData.nik))
-      newErrors.nik = "NIK harus 16 digit angka";
-    if (!formData.umur.trim()) newErrors.umur = "Umur wajib diisi";
-    if (!formData.jenis_kelamin)
-      newErrors.jenis_kelamin = "Jenis kelamin wajib dipilih";
-    if (!formData.tanggal_lahir)
-      newErrors.tanggal_lahir = "Tanggal lahir wajib diisi";
-    if (!formData.tempat_lahir.trim())
-      newErrors.tempat_lahir = "Tempat lahir wajib diisi";
-    if (!formData.agama) newErrors.agama = "Agama wajib dipilih";
-    if (!formData.alamat.trim()) newErrors.alamat = "Alamat wajib diisi";
-    if (!formData.no_kk.trim()) newErrors.no_kk = "Nomor KK wajib diisi";
-    if (!formData.persetujuan)
-      newErrors.persetujuan = "Anda harus menyetujui syarat dan ketentuan";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Handle submit form ke Supabase
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    if (validateForm()) {
-      try {
-        // Insert data ke tabel 'siswa' di Supabase
-        const { data, error } = await supabase.from("siswa").insert([
-          {
-            nama_siswa: formData.nama_siswa,
-            nik: formData.nik,
-            umur: parseInt(formData.umur),
-            jenis_kelamin: formData.jenis_kelamin,
-            tanggal_lahir: formData.tanggal_lahir,
-            tempat_lahir: formData.tempat_lahir,
-            agama: formData.agama,
-            alamat: formData.alamat,
-            no_kk: formData.no_kk,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-
-        if (error) throw error;
-
-        setSubmitSuccess(true);
-        // Reset form setelah submit berhasil
-        setFormData({
-          nama_siswa: "",
-          nik: "",
-          umur: "",
-          jenis_kelamin: "",
-          tanggal_lahir: "",
-          tempat_lahir: "",
-          agama: "",
-          alamat: "",
-          no_kk: "",
-          persetujuan: false,
-        });
-
-        // Sembunyikan pesan sukses setelah 5 detik
-        setTimeout(() => setSubmitSuccess(false), 5000);
-      } catch (error) {
-        console.error("Error:", error);
-        alert(`Gagal menyimpan data: ${error.message}`);
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      setIsSubmitting(false);
+  // Fungsi untuk menghapus siswa
+  const handleDelete = (id) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
+      setSiswa(siswa.filter((item) => item.id !== id));
     }
   };
 
+  // Filter data berdasarkan pencarian
+  const filteredSiswa = siswa.filter(
+    (item) =>
+      item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.nis.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.kelas.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="font-['Comic_Sans_MS']  min-h-screen p-0 m-0">
-      {/* Header */}
-      {/* <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[98%] mx-auto my-10 py-1 text-center bg-[#E6A4B4] text-black rounded-lg">
-        <marquee>
-          <h1 className="text-xl">SELAMAT DATANG DI TK Nurjannah</h1>
-        </marquee>
-      </div> */}
-      <Headers />
-
-      {/* Navigation Buttons */}
-      <div className="absolute top-0 left-4 mt-0">
-        <div className="text-right">
-          <ul className="flex space-x-2 mr-4 mt-2">
-            <li>
-              <a
-                href="index_login.php"
-                className="inline-block px-4 py-2 text-xs rounded-full bg-[#ffffff] text-[#ef6771] shadow-lg hover:bg-[#ef6771] hover:text-white transition"
-              >
-                Beranda
-              </a>
-            </li>
-            <li>
-              <a
-                href="tabelsiswa.php"
-                className="inline-block px-4 py-2 text-xs rounded-full bg-white text-[#ef6771] shadow-md hover:bg-[#ef6771] hover:text-white transition"
-              >
-                Daftar Nama Siswa
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Form Container */}
-      <div className="max-w-2xl mx-auto bg-white p-5 shadow-2xl my-[190px] mb-7">
-        <h1 className="text-2xl font-bold mb-4">FORMULIR PENDAFTARAN</h1>
-
-        {submitSuccess && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
-            Pendaftaran berhasil! Data siswa telah tersimpan.
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Nama Siswa */}
-          <div className="mb-4">
-            <label htmlFor="nama_siswa" className="block mb-1">
-              Nama siswa:
-            </label>
-            <input
-              type="text"
-              id="nama_siswa"
-              name="nama_siswa"
-              value={formData.nama_siswa}
-              onChange={handleChange}
-              className={`w-full p-2 border ${
-                errors.nama_siswa ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
-            {errors.nama_siswa && (
-              <p className="text-red-500 text-sm mt-1">{errors.nama_siswa}</p>
-            )}
-          </div>
-
-          {/* NIK */}
-          <div className="mb-4">
-            <label htmlFor="nik" className="block mb-1">
-              NIK:
-            </label>
-            <input
-              type="text"
-              id="nik"
-              name="nik"
-              value={formData.nik}
-              onChange={handleChange}
-              maxLength="16"
-              className={`w-full p-2 border ${
-                errors.nik ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
-            {errors.nik && (
-              <p className="text-red-500 text-sm mt-1">{errors.nik}</p>
-            )}
-          </div>
-
-          {/* Umur */}
-          <div className="mb-4">
-            <label htmlFor="umur" className="block mb-1">
-              Umur:
-            </label>
-            <input
-              type="number"
-              id="umur"
-              name="umur"
-              value={formData.umur}
-              onChange={handleChange}
-              min="2"
-              max="6"
-              className={`w-full p-2 border ${
-                errors.umur ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
-            {errors.umur && (
-              <p className="text-red-500 text-sm mt-1">{errors.umur}</p>
-            )}
-          </div>
-
-          {/* Jenis Kelamin */}
-          <div className="mb-4">
-            <label className="block mb-1">Jenis kelamin:</label>
-            <div className="flex items-center space-x-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="jenis_kelamin"
-                  value="Laki-laki"
-                  checked={formData.jenis_kelamin === "Laki-laki"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Laki-laki
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="jenis_kelamin"
-                  value="Perempuan"
-                  checked={formData.jenis_kelamin === "Perempuan"}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Perempuan
-              </label>
-            </div>
-            {errors.jenis_kelamin && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.jenis_kelamin}
-              </p>
-            )}
-          </div>
-
-          {/* Tanggal Lahir */}
-          <div className="mb-4">
-            <label htmlFor="tanggal_lahir" className="block mb-1">
-              Tanggal lahir:
-            </label>
-            <input
-              type="date"
-              id="tanggal_lahir"
-              name="tanggal_lahir"
-              value={formData.tanggal_lahir}
-              onChange={handleChange}
-              className={`w-full p-2 border ${
-                errors.tanggal_lahir ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
-            {errors.tanggal_lahir && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.tanggal_lahir}
-              </p>
-            )}
-          </div>
-
-          {/* Tempat Lahir */}
-          <div className="mb-4">
-            <label htmlFor="tempat_lahir" className="block mb-1">
-              Tempat lahir:
-            </label>
-            <input
-              type="text"
-              id="tempat_lahir"
-              name="tempat_lahir"
-              value={formData.tempat_lahir}
-              onChange={handleChange}
-              className={`w-full p-2 border ${
-                errors.tempat_lahir ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
-            {errors.tempat_lahir && (
-              <p className="text-red-500 text-sm mt-1">{errors.tempat_lahir}</p>
-            )}
-          </div>
-
-          {/* Agama */}
-          <div className="mb-4">
-            <label className="block mb-1">Agama:</label>
-            <div className="flex flex-wrap gap-4">
-              {[
-                "Islam",
-                "Kristen",
-                "Katolik",
-                "Hindu",
-                "Buddha",
-                "Konghucu",
-              ].map((agama) => (
-                <label key={agama} className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="agama"
-                    value={agama}
-                    checked={formData.agama === agama}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  {agama}
-                </label>
-              ))}
-            </div>
-            {errors.agama && (
-              <p className="text-red-500 text-sm mt-1">{errors.agama}</p>
-            )}
-          </div>
-
-          {/* Alamat */}
-          <div className="mb-4">
-            <label htmlFor="alamat" className="block mb-1">
-              Alamat:
-            </label>
-            <textarea
-              id="alamat"
-              name="alamat"
-              value={formData.alamat}
-              onChange={handleChange}
-              rows="3"
-              className={`w-full p-2 border ${
-                errors.alamat ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            ></textarea>
-            {errors.alamat && (
-              <p className="text-red-500 text-sm mt-1">{errors.alamat}</p>
-            )}
-          </div>
-
-          {/* Nomor KK */}
-          <div className="mb-4">
-            <label htmlFor="no_kk" className="block mb-1">
-              Nomor KK:
-            </label>
-            <input
-              type="text"
-              id="no_kk"
-              name="no_kk"
-              value={formData.no_kk}
-              onChange={handleChange}
-              className={`w-full p-2 border ${
-                errors.no_kk ? "border-red-500" : "border-gray-300"
-              } rounded`}
-            />
-            {errors.no_kk && (
-              <p className="text-red-500 text-sm mt-1">{errors.no_kk}</p>
-            )}
-          </div>
-
-          {/* Persetujuan */}
-          <div className="mb-6">
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                name="persetujuan"
-                checked={formData.persetujuan}
-                onChange={handleChange}
-                className="mr-2"
-              />
-              Saya menyetujui syarat dan ketentuan.
-            </label>
-            {errors.persetujuan && (
-              <p className="text-red-500 text-sm mt-1">{errors.persetujuan}</p>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`bg-[#ef6771] text-white px-5 py-2 rounded hover:bg-[#FF6F61] transition ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {isSubmitting ? "Menyimpan..." : "Kirim"}
+    <div className="container mx-auto px-4 py-8">
+      <Navbar />
+      <div className="mt-[200px] flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">DATA SISWA</h1>
+          <button className="bg-[#5cb071] hover:bg-[#ffde59] text-white px-4 py-2 rounded-md">
+            Tambah Siswa
           </button>
-        </form>
-        <Footer />
+        </div>
+
+        {/* Pencarian dan Filter */}
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="w-full md:w-1/2">
+              <label
+                htmlFor="search"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Cari Siswa
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  id="search"
+                  placeholder="Cari berdasarkan NIS, Nama, atau Kelas..."
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="w-full md:w-1/3">
+              <label
+                htmlFor="filter"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Filter Kelas
+              </label>
+              <select
+                id="filter"
+                className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="">Semua Kelas</option>
+                <option value="X IPA 1">X IPA 1</option>
+                <option value="X IPA 2">X IPA 2</option>
+                <option value="X IPS 1">X IPS 1</option>
+                <option value="X IPS 2">X IPS 2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabel Data Siswa */}
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    No
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    NIS
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Nama Siswa
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Jenis Kelamin
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Kelas
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredSiswa.length > 0 ? (
+                  filteredSiswa.map((item, index) => (
+                    <tr
+                      key={item.id}
+                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {index + 1}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.nis}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {item.nama}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {item.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.jenisKelamin}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {item.kelas}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button className="text-blue-600 hover:text-blue-900">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-900"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                          <button className="text-green-600 hover:text-green-900">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
+                      Tidak ada data siswa yang ditemukan
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-4 px-4 py-3 bg-white border-t border-gray-200 sm:px-6 rounded-b-lg">
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Menampilkan <span className="font-medium">1</span> sampai{" "}
+                <span className="font-medium">3</span> dari{" "}
+                <span className="font-medium">3</span> hasil
+              </p>
+            </div>
+            <div>
+              <nav
+                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                aria-label="Pagination"
+              >
+                <a
+                  href="#"
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg
+                    className="h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </a>
+                <a
+                  href="#"
+                  aria-current="page"
+                  className="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                >
+                  1
+                </a>
+                <a
+                  href="#"
+                  className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                >
+                  2
+                </a>
+                <a
+                  href="#"
+                  className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                >
+                  3
+                </a>
+                <a
+                  href="#"
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                >
+                  <span className="sr-only">Next</span>
+                  <svg
+                    className="h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </a>
+              </nav>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default FormPendaftaran;
+export default Home;

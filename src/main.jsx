@@ -6,7 +6,7 @@ import "./index.css";
 import LoginSection from "./pages/login.jsx";
 import RegisterSection from "./pages/register.jsx";
 import Home from "./pages/home.jsx";
-import Homee from "./pages/homee.jsx";
+import PendaftaranSiswa from "./pages/daftarsiswa.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -17,7 +17,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/" element={<App />} />
         <Route path="/login" element={<LoginSection />} />
         <Route path="/register" element={<RegisterSection />} />
-        <Route path="/dashboard" element={<Homee />} />
+        <Route path="/dashboard" element={<Home />} />
+        <Route path="/daftarsiswa" element={<PendaftaranSiswa />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
