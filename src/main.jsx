@@ -7,6 +7,9 @@ import LoginSection from "./pages/login.jsx";
 import RegisterSection from "./pages/register.jsx";
 import Home from "./pages/home.jsx";
 import PendaftaranSiswa from "./pages/daftarsiswa.jsx";
+import Navbar from "./components/navbar.jsx";
+import Tes from "./pages/connecttodrive.jsx";
+import GoogleSheetsUploader from "./pages/connecttodrive.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -19,6 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/register" element={<RegisterSection />} />
         <Route path="/dashboard" element={<Home />} />
         <Route path="/daftarsiswa" element={<PendaftaranSiswa />} />
+        <Route path="/connecttodrive" element={<GoogleSheetsUploader />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

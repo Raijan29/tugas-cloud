@@ -11,7 +11,7 @@ export const handleLogin = async (dataUser) => {
       .eq("email", email);
 
     if (data.length == 0) {
-      return { status: false, message: "Email belum terdafter" };
+      return { status: false, message: "Email belum terdaftar" };
     }
 
     const isMatch = await bcrypt.compare(password, data[0].password);

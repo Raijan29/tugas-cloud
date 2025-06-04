@@ -1,61 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
-
+import { GetSiswa, deleteSiswa } from "../db/auth/getsiswa";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { IoSearch } from "react-icons/io5";
 const Home = () => {
-  // Data contoh siswa
-  const [siswa, setSiswa] = useState([
-    {
-      id: 1,
-      nis: "2023001",
-      nama: "Andi Wijaya",
-      jenisKelamin: "Laki-laki",
-      kelas: "X IPA 1",
-      tanggalLahir: "2007-05-15",
-      alamat: "Jl. Merdeka No. 10, Jakarta",
-      noTelepon: "081234567890",
-      email: "andi.wijaya@email.com",
-    },
-    {
-      id: 2,
-      nis: "2023002",
-      nama: "Budi Santoso",
-      jenisKelamin: "Laki-laki",
-      kelas: "X IPA 2",
-      tanggalLahir: "2007-08-20",
-      alamat: "Jl. Sudirman No. 45, Jakarta",
-      noTelepon: "081298765432",
-      email: "budi.santoso@email.com",
-    },
-    {
-      id: 3,
-      nis: "2023003",
-      nama: "Citra Lestari",
-      jenisKelamin: "Perempuan",
-      kelas: "X IPS 1",
-      tanggalLahir: "2007-03-10",
-      alamat: "Jl. Thamrin No. 8, Jakarta",
-      noTelepon: "081223344556",
-      email: "citra.lestari@email.com",
-    },
-  ]);
-
-  // State untuk pencarian
+  const [siswa, setSiswa] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterTahun, setFilterTahun] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fungsi untuk menghapus siswa
-  const handleDelete = (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
-      setSiswa(siswa.filter((item) => item.id !== id));
+  const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const q = searchParams.get("q");
+
+  const handleSearch = () => {
+    setSearchParams({ q: searchTerm });
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [q]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+      try {
+        await deleteSiswa(id);
+        setSiswa(siswa.filter((item) => item.id !== id));
+      } catch (err) {
+        console.error("Gagal menghapus:", err);
+      }
     }
   };
 
-  // Filter data berdasarkan pencarian
-  const filteredSiswa = siswa.filter(
-    (item) =>
-      item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.nis.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.kelas.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const loadData = async () => {
+    try {
+      const data = await GetSiswa();
+      console.log({ data });
+
+      if (q && data.length != 0) {
+        const siswaFiltering = data.filter(
+          (item) =>
+            item.nama?.toLowerCase().includes(q.toLowerCase()) ||
+            item.nis?.toLowerCase().includes(q.toLowerCase()) ||
+            item.kelas?.toLowerCase().includes(q.toLowerCase())
+        );
+
+        if (siswaFiltering.length == 0) return alert("Siswa tidak ditemukan");
+
+        setSearchTerm(q);
+        setSiswa(siswaFiltering);
+        console.log({ data, siswaFiltering });
+
+        return;
+      }
+      setSiswa(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const getGenderColor = (jeniskelamin) => {
+    switch (jeniskelamin) {
+      case "perempuan":
+        return "bg-pink-100 text-pink-800";
+      case "laki-laki":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (isLoading) return <div className="text-center py-8">Memuat data...</div>;
+  if (error)
+    return <div className="text-red-500 text-center py-8">Error: {error}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -64,7 +84,10 @@ const Home = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-800">DATA SISWA</h1>
-          <button className="bg-[#5cb071] hover:bg-[#ffde59] text-white px-4 py-2 rounded-md">
+          <button
+            className="bg-[#5cb071] hover:bg-[#ffde59] text-white px-4 py-2 rounded-md"
+            onClick={() => navigate("/daftarsiswa")}
+          >
             Tambah Siswa
           </button>
         </div>
@@ -79,29 +102,21 @@ const Home = () => {
               >
                 Cari Siswa
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
+              <div className="relative flex items-center gap-4">
                 <input
                   type="text"
                   id="search"
                   placeholder="Cari berdasarkan NIS, Nama, atau Kelas..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                <button
+                  className="p-2 bg-green-500 rounded-lg"
+                  onClick={handleSearch}
+                >
+                  <IoSearch color="white" />
+                </button>
               </div>
             </div>
 
@@ -110,17 +125,17 @@ const Home = () => {
                 htmlFor="filter"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Filter Kelas
+                Filter
               </label>
               <select
                 id="filter"
                 className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                value={filterTahun}
+                onChange={(e) => setFilterTahun(e.target.value)}
               >
-                <option value="">Semua Kelas</option>
-                <option value="X IPA 1">X IPA 1</option>
-                <option value="X IPA 2">X IPA 2</option>
-                <option value="X IPS 1">X IPS 1</option>
-                <option value="X IPS 2">X IPS 2</option>
+                <option value="">Semua</option>
+                <option value="newest">Terbaru</option>
+                <option value="lasest">Terlama</option>
               </select>
             </div>
           </div>
@@ -148,6 +163,12 @@ const Home = () => {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
+                    NIK
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Nama Siswa
                   </th>
                   <th
@@ -160,7 +181,19 @@ const Home = () => {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Kelas
+                    Tanggal Lahir
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Alamat
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    No HP & Email
                   </th>
                   <th
                     scope="col"
@@ -171,8 +204,8 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredSiswa.length > 0 ? (
-                  filteredSiswa.map((item, index) => (
+                {siswa.length > 0 ? (
+                  siswa.map((item, index) => (
                     <tr
                       key={item.id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
@@ -184,20 +217,36 @@ const Home = () => {
                         {item.nis}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-500">
+                          {item.nik}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">
+                        {item.nama}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getGenderColor(
+                            item.jeniskelamin
+                          )}`}
+                        >
+                          {item.jeniskelamin}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.tanggallahir}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.alamat}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {item.nama}
+                          {item.nohp}
                         </div>
                         <div className="text-sm text-gray-500">
                           {item.email}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.jenisKelamin}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {item.kelas}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">

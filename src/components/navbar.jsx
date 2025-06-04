@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 w-full h-max px-12 bg-[#5cb071] z-20">
+    <nav className="fixed top-0 left-0 w-full h-max px-12 py-1 bg-[#5cb071] z-20">
       <div className="flex justify-between items-center  text-white mt-6">
         <div className="w-max flex items-center gap-5">
           <img
@@ -28,16 +28,22 @@ export default function Navbar() {
       </div>
       <div className="w-full h-max flex items-center gap-8 mt-5 ">
         <Link
-          to="/"
-          className="w-max px-4  py-2 border-b-2  font-bold text-white text-[.9rem]"
+          to="/dashboard"
+          className="w-max px-4  py-2   font-bold text-white text-[.9rem] hover:text-[#ffde59] hover:border-b-2 focus:border-b-2 focus:text-[#ffde59] cursor-pointer"
         >
           Beranda
         </Link>
         <Link
-          to="/daftarsiswa"
-          className="w-max px-4  py-2  font-bold text-gray-300 text-[.9rem]"
+          to="/dashboard"
+          className="w-max px-4  py-2   font-bold text-white text-[.9rem] hover:text-[#ffde59] hover:border-b-2 focus:border-b-2 focus:text-[#ffde59] cursor-pointer"
         >
-          Daftar Siswa
+          Data Siswa
+        </Link>
+        <Link
+          to="/daftarsiswa"
+          className="w-max px-4  py-2   font-bold text-white text-[.9rem] hover:text-[#ffde59] hover:border-b-2  focus:border-b-2 focus:text-[#ffde59] cursor-pointer "
+        >
+          Form Pendaftaran
         </Link>
       </div>
     </nav>

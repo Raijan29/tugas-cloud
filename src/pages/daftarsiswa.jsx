@@ -1,90 +1,154 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
+import { FaSpinner } from "react-icons/fa";
+import Navbar from "../components/navbar";
+import { handleDaftarSiswa } from "../db/auth/daftarsiswa";
+import { formatTanggalIndonesia } from "../utils/utils";
+
+import { gapi } from "gapi-script";
+const CLIENT_ID =
+  "116636762159-4chv55p11kuqq7rl59dh4b1o91hja6ou.apps.googleusercontent.com";
+const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+const SPREADSHEET_ID = "1H0E1vOeXlCa-gswVXlVlkD-s53jjf3GP5qC8ptPSKPc";
+const SHEET_NAME = "Sheet1";
 
 const PendaftaranSiswa = () => {
-  const [formData, setFormData] = useState({
-    namaLengkap: "",
-    nik: "",
-    jenisKelamin: "",
+  const [value, setValue] = useState({
+    nama: "raizan",
+    nik: "1207312908030001",
+    jenisKelamin: "laki-laki",
     tanggalLahir: "",
-    alamat: "",
-    noTelepon: "",
-    email: "",
-    namaOrtu: "",
-    pekerjaanOrtu: "",
+    alamat: "batu 8",
+    nohp: "081262615751",
+    email: "raizan@gmail.com",
+    namaOrtu: "pio",
   });
+
+  const resetValue = () => {
+    setValue({
+      nama: "",
+
+      nik: "",
+      jenisKelamin: "",
+      tanggalLahir: "",
+      alamat: "",
+      nohp: "",
+      email: "",
+      namaOrtu: "",
+    });
+  };
+
+  const [isError, setIsError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setValue((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const uploadData = async (data) => {
+    console.log({ data });
+
+    try {
+      const data = [
+        [
+          "Id",
+          "Nis",
+          "Nik",
+          "Nama",
+          "Jenis Kelamin",
+          "Tanggal Lahir",
+          "Alamat",
+          "No HP",
+          "Email",
+          "Nama Orang Tua",
+        ],
+        [
+          data.id,
+          data.nis,
+          data.nik,
+          data.nama,
+          data.jenisKelamin,
+          data.tanggalLahir,
+          data.alamat,
+          data.nohp,
+          data.email,
+          data.namaOrtu,
+        ],
+      ];
+
+      const response = await gapi.client.sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `'${SHEET_NAME}'!A1`, // Pakai tanda petik jika ada spasi
+        valueInputOption: "USER_ENTERED",
+        resource: { values: data },
+      });
+
+      console.log("Response:", response);
+      alert("Data berhasil diunggah ke Google Sheets!");
+    } catch (error) {
+      console.error("Upload error details:", error);
+      let errorMessage = "Failed to upload data";
+
+      if (error.result?.error) {
+        errorMessage += `: ${error.result.error.message}`;
+        if (error.result.error.status === "PERMISSION_DENIED") {
+          errorMessage +=
+            ". Please check if you have edit permissions for this spreadsheet.";
+        }
+      } else if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+
+      // alert(errorMessage);
+    }
+  };
+
+  const handleForm = async (e) => {
     e.preventDefault();
-    console.log("Data yang dikirim:", formData);
-    // Di sini Anda bisa menambahkan logika untuk mengirim data ke backend
-    alert("Pendaftaran berhasil dikirim!");
+    setIsError("");
+    setIsLoading(true);
+
+    const {
+      status,
+      message,
+      data: dataSiswaBaru,
+    } = await handleDaftarSiswa({
+      nama: value.nama,
+      nik: value.nik,
+      jeniskelamin: value.jenisKelamin,
+      tanggallahir: formatTanggalIndonesia(value.tanggalLahir),
+      alamat: value.alamat,
+      nohp: value.nohp,
+      email: value.email,
+      namaOrtu: value.namaOrtu,
+    });
+    console.log(data);
+
+    if (status) {
+      await uploadData(dataSiswaBaru);
+      // navigate("/dashboard");
+    } else {
+      setIsError(message);
+      resetValue();
+    }
+    setIsLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-[#e0dede] py-12 px-4 sm:px-6 lg:px-8">
-      <header className="fixed w-full  top-0 left-0 z-50 bg-[white] shadow-lg">
-        <nav className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="w-max h-max  flex items-center gap-3">
-              <a href="/" className="flex items-center">
-                <img src="/logo123.png" alt="Logo tk" className="h-12" />
-              </a>
-              <p className=" font-bold text-[20px] text-[#ffde59]">RA </p>
-              <p className=" font-bold text-[20px] text-[#5cb071]">NURJANNAH</p>
-            </div>
-            <div className="hidden lg:flex items-center space-x-8">
-              <Link to={"/"} className="text-gray-700 test">
-                Home
-              </Link>
-              <Link to={"/booking"} className="text-gray-700 test">
-                profil
-              </Link>
-              <Link to={"/dashboard"} className="text-gray-700 test">
-                Data Siswa
-              </Link>
-              <a href="/home" className="text-gray-700 test">
-                Data Siswa
-              </a>
-              <Link
-                to={"/login"}
-                className="text-blue-600 test  capitalize font-bold"
-              ></Link>
-            </div>
-            <button className="lg:hidden text-gray-700 ">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-          </div>
-        </nav>
-      </header>
-      <div className="max-w-md mx-auto mt-10 bg-[#5cb071] rounded-xl shadow-md overflow-hidden md:max-w-2xl">
+      <Navbar />
+      <div className="max-w-md mx-auto mt-[200px] bg-[#5cb071] rounded-xl shadow-md overflow-hidden md:max-w-2xl">
         <div className="p-8">
           <div className="text-center mb-8 flex flex-col items-center">
             <img
               src="/logo123.png"
               alt="logo tk"
-              className="h-16 bg-white rounded-md "
+              className="h-16 bg-white rounded-md"
             />
             <h2 className="text-2xl font-bold text-gray-800">
               FORMULIR PENDAFTARAN SISWA BARU
@@ -92,9 +156,12 @@ const PendaftaranSiswa = () => {
             <p className="mt-2 text-sm text-white">
               Isi data dengan lengkap dan benar
             </p>
+            {isError && (
+              <p className="mt-2 text-sm text-red-500 font-medium">{isError}</p>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 ">
+          <form onSubmit={handleForm} className="space-y-6">
             {/* Data Pribadi */}
             <div className="border-b border-gray-200 pb-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -111,17 +178,17 @@ const PendaftaranSiswa = () => {
                   </label>
                   <input
                     type="text"
-                    name="namaLengkap"
-                    id="namaLengkap"
-                    value={formData.namaLengkap}
-                    onChange={handleChange}
+                    name="nama"
+                    id="nama"
+                    value={value.nama}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
                 </div>
                 <div className="sm:col-span-6">
                   <label
-                    htmlFor="namaLengkap"
+                    htmlFor="nik"
                     className="block text-sm font-medium text-white"
                   >
                     NIK
@@ -130,8 +197,8 @@ const PendaftaranSiswa = () => {
                     type="text"
                     name="nik"
                     id="nik"
-                    value={formData.nik}
-                    onChange={handleChange}
+                    value={value.nik}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
@@ -139,16 +206,16 @@ const PendaftaranSiswa = () => {
 
                 <div className="sm:col-span-3">
                   <label
-                    htmlFor="jenisKelamin"
+                    htmlFor="jeniskelamin"
                     className="block text-sm font-medium text-white"
                   >
                     Jenis Kelamin
                   </label>
                   <select
-                    id="jenisKelamin"
-                    name="jenisKelamin"
-                    value={formData.jenisKelamin}
-                    onChange={handleChange}
+                    id="jeniskelamin"
+                    name="jeniskelamin"
+                    value={value.jeniskelamin}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   >
@@ -169,8 +236,8 @@ const PendaftaranSiswa = () => {
                     type="date"
                     name="tanggalLahir"
                     id="tanggalLahir"
-                    value={formData.tanggalLahir}
-                    onChange={handleChange}
+                    value={value.tanggalLahir}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
@@ -187,8 +254,8 @@ const PendaftaranSiswa = () => {
                     id="alamat"
                     name="alamat"
                     rows={3}
-                    value={formData.alamat}
-                    onChange={handleChange}
+                    value={value.alamat}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
@@ -203,10 +270,10 @@ const PendaftaranSiswa = () => {
                   </label>
                   <input
                     type="tel"
-                    name="noTelepon"
-                    id="noTelepon"
-                    value={formData.noTelepon}
-                    onChange={handleChange}
+                    name="nohp"
+                    id="nohp"
+                    value={value.nohp}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
@@ -223,8 +290,8 @@ const PendaftaranSiswa = () => {
                     type="email"
                     name="email"
                     id="email"
-                    value={formData.email}
-                    onChange={handleChange}
+                    value={value.email}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
@@ -250,26 +317,8 @@ const PendaftaranSiswa = () => {
                     type="text"
                     name="namaOrtu"
                     id="namaOrtu"
-                    value={formData.namaOrtu}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-6">
-                  <label
-                    htmlFor="pekerjaanOrtu"
-                    className="block text-sm font-medium text-white"
-                  >
-                    Pekerjaan Orang Tua/Wali
-                  </label>
-                  <input
-                    type="text"
-                    name="pekerjaanOrtu"
-                    id="pekerjaanOrtu"
-                    value={formData.pekerjaanOrtu}
-                    onChange={handleChange}
+                    value={value.namaOrtu}
+                    onChange={(e) => handleChange(e)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
                     required
                   />
@@ -281,9 +330,17 @@ const PendaftaranSiswa = () => {
             <div className="flex justify-end">
               <button
                 type="submit"
+                disabled={isLoading}
                 className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-black bg-[#ffde59] hover:bg-[#b89f3a] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Daftar Sekarang
+                {isLoading ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" />
+                    Memproses...
+                  </>
+                ) : (
+                  "Daftar Sekarang"
+                )}
               </button>
             </div>
           </form>
