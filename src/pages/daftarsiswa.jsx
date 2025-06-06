@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { data, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import Navbar from "../components/navbar";
 import { handleDaftarSiswa } from "../db/auth/daftarsiswa";
 import { formatTanggalIndonesia } from "../utils/utils";
 
 import { gapi } from "gapi-script";
+import { uploadDataSheet } from "../lib/spreedsheet";
 const CLIENT_ID =
   "116636762159-4chv55p11kuqq7rl59dh4b1o91hja6ou.apps.googleusercontent.com";
 const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
@@ -13,6 +14,8 @@ const SPREADSHEET_ID = "1H0E1vOeXlCa-gswVXlVlkD-s53jjf3GP5qC8ptPSKPc";
 const SHEET_NAME = "Sheet1";
 
 const PendaftaranSiswa = () => {
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [authError, setAuthError] = useState(null);
   const [value, setValue] = useState({
     nama: "raizan",
     nik: "1207312908030001",
@@ -27,7 +30,6 @@ const PendaftaranSiswa = () => {
   const resetValue = () => {
     setValue({
       nama: "",
-
       nik: "",
       jenisKelamin: "",
       tanggalLahir: "",
@@ -50,61 +52,62 @@ const PendaftaranSiswa = () => {
     }));
   };
 
-  const uploadData = async (data) => {
-    console.log({ data });
-
+  const initializeGoogleAPI = async () => {
     try {
-      const data = [
-        [
-          "Id",
-          "Nis",
-          "Nik",
-          "Nama",
-          "Jenis Kelamin",
-          "Tanggal Lahir",
-          "Alamat",
-          "No HP",
-          "Email",
-          "Nama Orang Tua",
-        ],
-        [
-          data.id,
-          data.nis,
-          data.nik,
-          data.nama,
-          data.jenisKelamin,
-          data.tanggalLahir,
-          data.alamat,
-          data.nohp,
-          data.email,
-          data.namaOrtu,
-        ],
-      ];
+      await gapi.load("client:auth2", async () => {
+        try {
+          await gapi.client.init({
+            clientId: CLIENT_ID,
+            scope: SCOPES,
+            discoveryDocs: [
+              "https://sheets.googleapis.com/$discovery/rest?version=v4",
+            ],
+          });
 
-      const response = await gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID,
-        range: `'${SHEET_NAME}'!A1`, // Pakai tanda petik jika ada spasi
-        valueInputOption: "USER_ENTERED",
-        resource: { values: data },
-      });
+          const authInstance = gapi.auth2.getAuthInstance();
+          authInstance.isSignedIn.listen((isSignedIn) => {
+            setIsSignedIn(isSignedIn);
+            if (!isSignedIn) {
+              authInstance.signIn();
+            }
+          });
 
-      console.log("Response:", response);
-      alert("Data berhasil diunggah ke Google Sheets!");
-    } catch (error) {
-      console.error("Upload error details:", error);
-      let errorMessage = "Failed to upload data";
+          // Set initial state
+          setIsSignedIn(authInstance.isSignedIn.get());
 
-      if (error.result?.error) {
-        errorMessage += `: ${error.result.error.message}`;
-        if (error.result.error.status === "PERMISSION_DENIED") {
-          errorMessage +=
-            ". Please check if you have edit permissions for this spreadsheet.";
+          // If not signed in, attempt silent sign-in first
+          if (!authInstance.isSignedIn.get()) {
+            try {
+              await authInstance.signIn();
+            } catch (signInError) {
+              // // Silent sign-in failed, show prompt
+              // await authInstance.signIn();
+              if (signInError.error === "popup_closed_by_user") {
+                setAuthError(
+                  "Login dibatalkan. Silakan coba lagi dan selesaikan proses login."
+                );
+              } else {
+                setAuthError(
+                  `Gagal login: ${signInError.error || signInError.message}`
+                );
+              }
+            }
+          }
+        } catch (initError) {
+          console.error("Google API initialization error:", initError);
+          setAuthError(
+            `Failed to initialize Google API: ${
+              initError.details || initError.message
+            }`
+          );
+        } finally {
+          setIsLoading(false);
         }
-      } else if (error.message) {
-        errorMessage += `: ${error.message}`;
-      }
-
-      // alert(errorMessage);
+      });
+    } catch (loadError) {
+      console.error("Google API load error:", loadError);
+      setAuthError(`Failed to load Google API: ${loadError.message}`);
+      setIsLoading(false);
     }
   };
 
@@ -113,11 +116,7 @@ const PendaftaranSiswa = () => {
     setIsError("");
     setIsLoading(true);
 
-    const {
-      status,
-      message,
-      data: dataSiswaBaru,
-    } = await handleDaftarSiswa({
+    const { status, message, data } = await handleDaftarSiswa({
       nama: value.nama,
       nik: value.nik,
       jeniskelamin: value.jenisKelamin,
@@ -130,7 +129,7 @@ const PendaftaranSiswa = () => {
     console.log(data);
 
     if (status) {
-      await uploadData(dataSiswaBaru);
+      await uploadDataSheet(data);
       // navigate("/dashboard");
     } else {
       setIsError(message);
@@ -138,6 +137,10 @@ const PendaftaranSiswa = () => {
     }
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    initializeGoogleAPI();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#e0dede] py-12 px-4 sm:px-6 lg:px-8">

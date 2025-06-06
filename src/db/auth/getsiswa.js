@@ -1,5 +1,10 @@
 // src/services/supabaseSiswa.js
+import { SiTrueup } from "react-icons/si";
 import { supabase } from "../supabaseClient";
+
+const getRowIndexById = (data, id) => {
+  return data.findIndex((item) => item.id === id); // 0-based index
+};
 
 export const GetSiswa = async () => {
   try {
@@ -19,7 +24,7 @@ export const GetSiswa = async () => {
         created_at
       `
       )
-      .order("created_at", { ascending: false }); // Urutkan berdasarkan yang terbaru
+      .order("id", { ascending: true }); // Urutkan berdasarkan yang terbaru
 
     if (error) {
       console.error("Error fetching data from Supabase:", error);
@@ -68,11 +73,23 @@ export const GetSiswa = async () => {
 
 export const deleteSiswa = async (id) => {
   try {
-    const { error } = await supabase.from("siswa").delete().eq("id", id);
+    const { data: siswaList } = await supabase
+      .from("siswa")
+      .select("id")
+      .order("id", { ascending: true });
 
+    const rowIndex = siswaList.findIndex((item) => item.id === id);
+
+    console.log("Row index to delete:", rowIndex);
+
+    const { error } = await supabase.from("siswa").delete().eq("id", id);
     if (error) throw error;
 
-    return { success: true, message: "Data siswa berhasil dihapus" };
+    return {
+      success: true,
+      message: `Data siswa di baris ke-${rowIndex + 1} berhasil dihapus`,
+      rowIndex,
+    };
   } catch (error) {
     console.error("Error deleting siswa:", error);
     throw error;

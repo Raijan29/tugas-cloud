@@ -4,6 +4,7 @@ import { gapi } from "gapi-script";
 const CLIENT_ID =
   "116636762159-4chv55p11kuqq7rl59dh4b1o91hja6ou.apps.googleusercontent.com";
 const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
 const SPREADSHEET_ID = "1H0E1vOeXlCa-gswVXlVlkD-s53jjf3GP5qC8ptPSKPc";
 const SHEET_NAME = "Sheet1";
 
@@ -31,6 +32,17 @@ export default function GoogleSheetsUploader() {
     };
   }, []);
 
+  const forceReAuth = async () => {
+    const authInstance = gapi.auth2.getAuthInstance();
+    await authInstance.signOut(); // logout
+    await authInstance.disconnect(); // reset semua token dan scope
+    const user = await authInstance.signIn({
+      scope: SCOPES,
+      prompt: "consent", // sangat penting: paksa Google tampilkan ulang dialog scope
+    });
+    setIsSignedIn(authInstance.isSignedIn.get());
+  };
+
   const initializeGoogleAPI = async () => {
     try {
       await gapi.load("client:auth2", async () => {
@@ -57,10 +69,19 @@ export default function GoogleSheetsUploader() {
           // If not signed in, attempt silent sign-in first
           if (!authInstance.isSignedIn.get()) {
             try {
-              await authInstance.signIn({ prompt: "none" });
-            } catch (silentError) {
-              // Silent sign-in failed, show prompt
               await authInstance.signIn();
+            } catch (signInError) {
+              // // Silent sign-in failed, show prompt
+              // await authInstance.signIn();
+              if (signInError.error === "popup_closed_by_user") {
+                setAuthError(
+                  "Login dibatalkan. Silakan coba lagi dan selesaikan proses login."
+                );
+              } else {
+                setAuthError(
+                  `Gagal login: ${signInError.error || signInError.message}`
+                );
+              }
             }
           }
         } catch (initError) {
@@ -89,8 +110,8 @@ export default function GoogleSheetsUploader() {
 
     try {
       const data = [
-        ["Nama", "Email", "NIS"],
-        ["Possimussss", "email@example.com", "202501001"],
+        ["id", "Email", "NIS"],
+        ["Possimus", "email@example.com", "202501001"],
       ];
 
       const response = await gapi.client.sheets.spreadsheets.values.update({

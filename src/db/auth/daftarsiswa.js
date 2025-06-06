@@ -122,7 +122,19 @@ export const handleDaftarSiswa = async (dataUser) => {
     return {
       status: true,
       message: "Pendaftaran berhasil",
-      data: { nis },
+
+      data: {
+        id: newSiswa ? newSiswa[0].id : null,
+        nis: newSiswa ? newSiswa[0].nis : nis,
+        nik: newSiswa ? newSiswa[0].nik : null,
+        nama: newSiswa ? newSiswa[0].nama : nama,
+        jeniskelamin: newSiswa ? newSiswa[0].jeniskelamin : jeniskelamin,
+        tanggallahir: newSiswa ? newSiswa[0].tanggallahir : tanggallahir,
+        alamat: newSiswa ? newSiswa[0].alamat : alamat,
+        nohp: newSiswa ? newSiswa[0].nohp : nohp,
+        email: newSiswa ? newSiswa[0].email : email,
+        namaOrtu: newSiswa ? newSiswa[0].namaOrtu : namaOrtu,
+      },
     };
   } catch (error) {
     console.error("Registration error:", error);

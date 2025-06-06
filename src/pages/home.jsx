@@ -3,6 +3,7 @@ import Navbar from "../components/navbar";
 import { GetSiswa, deleteSiswa } from "../db/auth/getsiswa";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { IoSearch } from "react-icons/io5";
+import { deleteRow } from "../lib/spreedsheet";
 const Home = () => {
   const [siswa, setSiswa] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +27,10 @@ const Home = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
       try {
-        await deleteSiswa(id);
+        const res = await deleteSiswa(id);
+        console.log("ID Rows to delete:", res.rowIndex);
+
+        await deleteRow(res.rowIndex + 1);
         setSiswa(siswa.filter((item) => item.id !== id));
       } catch (err) {
         console.error("Gagal menghapus:", err);
@@ -37,7 +41,6 @@ const Home = () => {
   const loadData = async () => {
     try {
       const data = await GetSiswa();
-      console.log({ data });
 
       if (q && data.length != 0) {
         const siswaFiltering = data.filter(
